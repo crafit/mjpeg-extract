@@ -32,7 +32,7 @@ func main() {
 		found := bytes.HasSuffix(line, []byte(delimiter))
 		if found == true {
 			data = append(data, line[:(len(line)-len(delimiter))]...)
-			ioutil.WriteFile("test.jpg", data, 0644)
+			ioutil.WriteFile("frame.jpg", data, 0644)
 			break
 		} else {
 			data = append(data, line...)
