@@ -2,8 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"image"
 	"image/jpeg"
 	"log"
 	"os"
@@ -25,14 +23,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var img image.Image
-
-	var tmp image.Image
-	tmp, err = dec.Decode()
+	img, err := dec.Decode()
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
-	img = tmp
-	frame, _ := os.Create("frame.jpg")
+	frame, err := os.Create("frame.jpg")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	jpeg.Encode(frame, img, &jpeg.Options{jpeg.DefaultQuality})
 }
