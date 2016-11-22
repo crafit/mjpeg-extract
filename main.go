@@ -1,42 +1,38 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
+	"flag"
 	"fmt"
-	"io/ioutil"
-	"net/http"
+	"image"
+	"image/jpeg"
+	"log"
 	"os"
-	"regexp"
+
+	"github.com/mattn/go-mjpeg"
 )
 
+var url = flag.String("url", "", "Camera host")
+
 func main() {
-	resp, err := http.Get(os.Args[1])
+	flag.Parse()
+	if *url == "" {
+		flag.Usage()
+		os.Exit(1)
+	}
+
+	dec, err := mjpeg.NewDecoderFromURL(*url)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
-	contentType := resp.Header.Get("Content-Type")
-	boundaryRe := regexp.MustCompile(`^multipart/x-mixed-replace;boundary=(.*)$`)
-	boundary := boundaryRe.FindStringSubmatch(contentType)[1]
-	buffer := bufio.NewReader(resp.Body)
+	var img image.Image
 
-	delimiter := fmt.Sprintf("--%s\r\n", boundary)
-	data := make([]byte, 0)
-	for i := 0; i < 4; i++ {
-		buffer.ReadBytes('\n')
+	var tmp image.Image
+	tmp, err = dec.Decode()
+	if err != nil {
+		fmt.Println(err)
 	}
-
-	for {
-		line, _ := buffer.ReadBytes('\n')
-		found := bytes.HasSuffix(line, []byte(delimiter))
-		if found == true {
-			data = append(data, line[:(len(line)-len(delimiter))]...)
-			ioutil.WriteFile("frame.jpg", data, 0644)
-			break
-		} else {
-			data = append(data, line...)
-		}
-	}
-	resp.Body.Close()
+	img = tmp
+	frame, _ := os.Create("frame.jpg")
+	jpeg.Encode(frame, img, &jpeg.Options{jpeg.DefaultQuality})
 }
